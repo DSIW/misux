@@ -1,0 +1,443 @@
+/*
+ * misux - musicplayer (written in Java)
+Copyright (C) 2011  DSIW <dsiw@privatdemail.net>
+ * 
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ */
+package misux.gui.frame;
+
+import java.awt.Component;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.File;
+
+import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.LayoutStyle;
+import javax.swing.SwingConstants;
+
+import misux.gui.Messages;
+import misux.pref.DefaultPref;
+import misux.pref.Preferences;
+
+/**
+ * This is a dialoge for the preferences from the program.
+ * 
+ * @author DSIW
+ */
+@SuppressWarnings("serial")
+public class Pref extends JDialog
+{
+  private JButton         cancelButton;
+  private JButton         choosePath;
+  private JButton         defaultPref;
+  private JComboBox       src;
+  private JLabel          PATH;
+  private JLabel          ENC;
+  private JLabel          SRC;
+  private JRadioButton    ogg;
+  private JRadioButton    mp3;
+  private JTextField      dir;
+  private JButton         okButton;
+
+  private int             returnStatus = Pref.RET_CANCEL;
+  /** A return status code - returned if Cancel button has been pressed */
+  public static final int RET_CANCEL   = 0;
+  /** A return status code - returned if OK button has been pressed */
+  public static final int RET_OK       = 1;
+
+
+  /**
+   * Creates a new dialoge.
+   * 
+   * @param parent
+   */
+  public Pref(final Frame parent)
+  {
+    super(parent, true);
+    initComponents();
+    setVisible(true);
+  }
+
+
+  private void cancelButtonActionPerformed (final ActionEvent evt)
+  {
+    doClose(Pref.RET_CANCEL);
+  }
+
+
+  private void choosePathActionPerformed (final ActionEvent evt)
+  {
+    String path = null;
+    final PathChooser pc = new PathChooser(this);
+    if (pc.getPath() != null) {
+      path = pc.getPath();
+    }
+    dir.setText(path);
+    dirActionPerformed(evt);
+  }
+
+
+  private void closeDialog (final WindowEvent evt)
+  {
+    doClose(Pref.RET_CANCEL);
+  }
+
+
+  private void defaultActionPerformed (final ActionEvent evt)
+  {
+    final misux.pref.Pref defaultPrefs = new DefaultPref();
+    try {
+      final int dEnc = defaultPrefs.getOption("io.music.rip.format")
+          .getIntegerValue();
+      final String dMusicDir = defaultPrefs.getOption("io.user.musicdir")
+          .getStringValue();
+      final int dSrc = defaultPrefs.getOption("io.http.cover.source")
+          .getIntegerValue();
+
+      if (dEnc == 0) {
+        ogg.setSelected(true);
+        mp3.setSelected(false);
+      } else if (dEnc == 1) {
+        ogg.setSelected(false);
+        mp3.setSelected(true);
+      }
+
+      dir.setText(dMusicDir);
+
+      src.setSelectedIndex(dSrc);
+    }
+    catch (final Exception e) {
+      Messages.showErrorMessage(this, "Default preferences can't be loaded");
+    }
+  }
+
+
+  private void dirActionPerformed (final ActionEvent evt)
+  {
+    if (dir.getText() == null || dir.getText().isEmpty()) {
+      Messages.showInfoMessage(this, "Please set a value!");
+      return;
+    }
+    final File path = new File(dir.getText());
+    if (path.isDirectory()) {} else {
+      Messages.showInfoMessage(this, "Please set a directory!");
+    }
+  }
+
+
+  private void doClose (final int retStatus)
+  {
+    returnStatus = retStatus;
+    setVisible(false);
+    dispose();
+  }
+
+
+  private String[] getPrefSources ()
+  {
+    final String[] srcs = new String[2];
+    try {
+      srcs[0] = Preferences.get().getOption("io.http.cover.source.az")
+          .getStringValue();
+      srcs[1] = Preferences.get().getOption("io.http.cover.source.gg")
+          .getStringValue();
+    }
+    catch (final Exception e) {
+      e.printStackTrace();
+    }
+    return srcs;
+  }
+
+
+  /** @return the return status of this dialog - one of RET_OK or RET_CANCEL */
+  public int getReturnStatus ()
+  {
+    return returnStatus;
+  }
+
+
+  /**
+   * This method is called from within the constructor to initialize the form.
+   * WARNING: Do NOT modify this code. The content of this method is always
+   * regenerated by the Form Editor.
+   */
+  private void initComponents ()
+  {
+
+    okButton = new JButton();
+    cancelButton = new JButton();
+    PATH = new JLabel();
+    ogg = new JRadioButton();
+    mp3 = new JRadioButton();
+    choosePath = new JButton();
+    dir = new JTextField();
+    ENC = new JLabel();
+    SRC = new JLabel();
+    src = new JComboBox();
+    defaultPref = new JButton();
+
+    addWindowListener(new WindowAdapter()
+    {
+      @Override
+      public void windowClosing (final WindowEvent evt)
+      {
+        closeDialog(evt);
+      }
+    });
+
+    okButton.setText("Save");
+    okButton.setToolTipText("Save the preferences");
+    okButton.addActionListener(new ActionListener()
+    {
+      @Override
+      public void actionPerformed (final ActionEvent evt)
+      {
+        okButtonActionPerformed(evt);
+      }
+    });
+
+    cancelButton.setText("Cancel");
+    cancelButton.setToolTipText("Cancel without saving the preferences");
+    cancelButton.addActionListener(new ActionListener()
+    {
+      @Override
+      public void actionPerformed (final ActionEvent evt)
+      {
+        cancelButtonActionPerformed(evt);
+      }
+    });
+
+    PATH.setText("Default path to music dir:");
+    PATH.setToolTipText("Load the default music directory");
+
+    ogg.setText("OGG");
+    ogg.setToolTipText("Select the music encoding");
+
+    mp3.setText("MP3");
+    mp3.setToolTipText("Select the music encoding");
+
+    try {
+      final int enc = Preferences.get().getOption("io.music.rip.format")
+          .getIntegerValue();
+      if (enc == 0) {
+        ogg.setSelected(true);
+        mp3.setSelected(false);
+      } else if (enc == 1) {
+        ogg.setSelected(false);
+        mp3.setSelected(true);
+      }
+    }
+    catch (final Exception e1) {
+      Messages.showErrorMessage(this, "Preferences can't be loaded");
+    }
+
+    final ButtonGroup group = new ButtonGroup();
+    group.add(ogg);
+    group.add(mp3);
+
+    choosePath.setText("Path...");
+    choosePath.setToolTipText("Change the Path");
+    choosePath.addActionListener(new ActionListener()
+    {
+      @Override
+      public void actionPerformed (final ActionEvent evt)
+      {
+        choosePathActionPerformed(evt);
+      }
+    });
+
+    String path = "";
+    try {
+      path = Preferences.get().getOption("io.user.musicdir").getStringValue();
+    }
+    catch (final Exception e) {}
+    dir.setText(path);
+    dir.setToolTipText("Load the default music directory");
+    dir.addActionListener(new ActionListener()
+    {
+      @Override
+      public void actionPerformed (final ActionEvent evt)
+      {
+        dirActionPerformed(evt);
+      }
+    });
+
+    ENC.setText("Music encoding:");
+    ENC.setToolTipText("Select the music encoding");
+
+    SRC.setText("Cover source:");
+    SRC.setToolTipText("Select the default cover source");
+
+    int index = -1;
+    try {
+      index = Preferences.get().getOption("io.http.cover.source")
+          .getIntegerValue();
+    }
+    catch (final Exception e) {}
+    src.setModel(new DefaultComboBoxModel(getPrefSources()));
+    src.setSelectedIndex(index);
+    src.setToolTipText("Select the default cover source");
+
+    defaultPref.setText("Default");
+    defaultPref.setToolTipText("Load default preferences");
+    defaultPref.addActionListener(new ActionListener()
+    {
+      @Override
+      public void actionPerformed (final ActionEvent evt)
+      {
+        defaultActionPerformed(evt);
+      }
+    });
+
+    final GroupLayout layout = new GroupLayout(getContentPane());
+    getContentPane().setLayout(layout);
+    layout
+        .setHorizontalGroup(layout
+            .createParallelGroup(GroupLayout.Alignment.LEADING)
+            .addGroup(
+                layout
+                    .createSequentialGroup()
+                    .addContainerGap()
+                    .addGroup(
+                        layout
+                            .createParallelGroup(GroupLayout.Alignment.LEADING)
+                            .addComponent(PATH).addComponent(ENC)
+                            .addComponent(SRC).addComponent(defaultPref))
+                    .addGap(75, 75, 75)
+                    .addGroup(
+                        layout
+                            .createParallelGroup(GroupLayout.Alignment.TRAILING)
+                            .addGroup(
+                                GroupLayout.Alignment.LEADING,
+                                layout.createSequentialGroup()
+                                    .addComponent(ogg)
+                                    .addContainerGap(212, Short.MAX_VALUE))
+                            .addGroup(
+                                GroupLayout.Alignment.LEADING,
+                                layout.createSequentialGroup()
+                                    .addComponent(mp3).addContainerGap())
+                            .addGroup(
+                                layout
+                                    .createSequentialGroup()
+                                    .addGroup(
+                                        layout
+                                            .createParallelGroup(
+                                                GroupLayout.Alignment.TRAILING)
+                                            .addComponent(src,
+                                                GroupLayout.Alignment.LEADING,
+                                                0, 239, Short.MAX_VALUE)
+                                            .addGroup(
+                                                layout
+                                                    .createSequentialGroup()
+                                                    .addComponent(
+                                                        dir,
+                                                        GroupLayout.PREFERRED_SIZE,
+                                                        177,
+                                                        GroupLayout.PREFERRED_SIZE)
+                                                    .addPreferredGap(
+                                                        LayoutStyle.ComponentPlacement.RELATED)
+                                                    .addComponent(choosePath))
+                                            .addGroup(
+                                                layout
+                                                    .createSequentialGroup()
+                                                    .addComponent(
+                                                        okButton,
+                                                        GroupLayout.PREFERRED_SIZE,
+                                                        90,
+                                                        GroupLayout.PREFERRED_SIZE)
+                                                    .addPreferredGap(
+                                                        LayoutStyle.ComponentPlacement.RELATED)
+                                                    .addComponent(
+                                                        cancelButton,
+                                                        GroupLayout.PREFERRED_SIZE,
+                                                        71,
+                                                        GroupLayout.PREFERRED_SIZE)))
+                                    .addGap(29, 29, 29)))));
+
+    layout.linkSize(SwingConstants.HORIZONTAL, new Component[] { cancelButton,
+        okButton });
+
+    layout.setVerticalGroup(layout.createParallelGroup(
+        GroupLayout.Alignment.LEADING).addGroup(
+        GroupLayout.Alignment.TRAILING,
+        layout
+            .createSequentialGroup()
+            .addContainerGap()
+            .addGroup(
+                layout
+                    .createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(PATH)
+                    .addComponent(choosePath)
+                    .addComponent(dir, GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+            .addGap(18, 18, 18)
+            .addGroup(
+                layout
+                    .createParallelGroup(GroupLayout.Alignment.LEADING)
+                    .addGroup(
+                        layout
+                            .createSequentialGroup()
+                            .addComponent(ogg)
+                            .addPreferredGap(
+                                LayoutStyle.ComponentPlacement.RELATED)
+                            .addComponent(mp3)).addComponent(ENC))
+            .addGap(18, 18, 18)
+            .addGroup(
+                layout
+                    .createParallelGroup(GroupLayout.Alignment.BASELINE)
+                    .addComponent(SRC)
+                    .addComponent(src, GroupLayout.PREFERRED_SIZE,
+                        GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+            .addGap(26, 26, 26)
+            .addGroup(
+                layout
+                    .createParallelGroup(GroupLayout.Alignment.BASELINE, false)
+                    .addComponent(cancelButton).addComponent(okButton)
+                    .addComponent(defaultPref)).addContainerGap()));
+
+    pack();
+  }
+
+
+  private void okButtonActionPerformed (final ActionEvent evt)
+  {
+    try {
+      try {
+        if (dir.getText() != null) {
+          Preferences.get().setOption("io.user.musicdir", dir.getText());
+        }
+        Preferences.get().setOption("io.http.cover.source",
+            src.getSelectedIndex());
+        if (mp3.isSelected() && !ogg.isSelected()) {
+          Preferences.get().setOption("io.music.rip.format", 1);
+        }
+        if (!mp3.isSelected() && ogg.isSelected()) {
+          Preferences.get().setOption("io.music.rip.format", 0);
+        }
+      }
+      catch (final Exception e) {
+        Messages.showErrorMessage(this, "Option can't be written");
+      }
+      Preferences.write();
+    }
+    catch (final Exception e) {
+      Messages.showErrorMessage(this, "Option can't be written");
+    }
+    doClose(Pref.RET_OK);
+  }
+}
