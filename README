@@ -7,3 +7,6 @@ Jabber:   dsiw@jabme.de
 Blog:     https://dsiw.wordpress.com/
 
 License:  GPLv3
+
+Start program:
+java -jar misux-v*.jar
